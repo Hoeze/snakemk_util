@@ -13,7 +13,7 @@ test_requirements = [
 
 setup(
     name='snakemk_util',
-    version='0.0.1',
+    version='0.1.0',
     description="utility functions for snakemake",
     author="Florian Hölzlwimmer",
     author_email='git.ich@frhoelzlwimmer.de',
