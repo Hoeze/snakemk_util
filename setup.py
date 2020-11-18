@@ -7,14 +7,17 @@ requirements = [
     "snakemake",
 ]
 
-dev_requirements = [
-    "bumpversion",
-    "wheel",
+test_requirements = [
     "pytest>=3.3.1",
     "pytest-xdist",
     "pytest-pep8",
     "pytest-mock",
     "pytest-cov",
+]
+
+dev_requirements = [
+    "bumpversion",
+    "wheel",
 ]
 
 setup(
