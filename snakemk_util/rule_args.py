@@ -16,20 +16,43 @@ class AttrDict(dict):
 
 
 def map_custom_wd(workflow, path_iterable, root="."):
+    """
+    Make paths relative to the Snakemake working dir absolute
+
+    * If a path is absolute, it is left unchanged
+    * If it is relative, assume it is made absolute by
+    prepending the root dir and the Snakemake workdir
+
+    ex: `y_KCs_1/edgeR` becomes `/Projects/SCS/` + `results/20201118` + `y_KCs_1/edgeR`
+
+    This makes certain operations straightforward while avoiding hardcoding absolute paths
+    in Snakefiles (just on the call to this function)
+    """
 
     def include_custom_wd(workflow, path):
 
-        if path[0] == '/':
+        # if path is absolute, leave it
+        if os.path.isabs(path):
             return path
+
+        # Otherwise it is relative
+        # Make it absolute
+        # * 1 infer the workdir
+        # https://github.com/Hoeze/snakemk_util/issues/1
+        if workflow._workdir is None:
+            workdir = os.path.dirname(workflow.snakefile)
         else:
-            return os.path.join(root, workflow._workdir, path)
+            workdir = workflow._workdir
+
+        # * 2 Put together root, workdir and path and return
+        return os.path.join(root, workdir, path)
 
     if isinstance(path_iterable, list):
         return list(map(lambda x: include_custom_wd(workflow, x), path_list))
     elif isinstance(path_iterable, dict):
         return {k: include_custom_wd(workflow, v) for k, v in path_iterable.items()}
 
-def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=False, create_dir = True, root="."):
+def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=False, create_dir=True, root="."):
     """
     Returns a rule object for some default arguments.
     Example usage:
@@ -67,8 +90,11 @@ def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=Fals
         smk_input = dict(rule.expand_input(default_wildcards)[0])
         smk_output = dict(rule.expand_output(default_wildcards)[0])
         smk_params = dict(rule.expand_params(
-            default_wildcards, rule.input, rule.output, AttrDict(rule.resources)))
+            default_wildcards, rule.input, rule.output, AttrDict(rule.resources)
+        ))
 
+
+        # Make paths in snakemake inputs and outputs absolute
         smk_input = map_custom_wd(workflow, smk_input, root)
         smk_output = map_custom_wd(workflow, smk_output, root)
 
