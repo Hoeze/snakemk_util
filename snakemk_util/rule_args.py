@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 @dataclass
 class SnakemakeRuleArgs:
+    resources: dict
     input: dict
     params: dict
     output: dict
@@ -64,10 +65,15 @@ def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=Fals
         rule = workflow.get_rule(rule_name)
 
 
+        smk_resources = AttrDict(rule.resources)
         smk_input = dict(rule.expand_input(default_wildcards)[0])
         smk_output = dict(rule.expand_output(default_wildcards)[0])
         smk_params = dict(rule.expand_params(
-            default_wildcards, rule.input, rule.output, AttrDict(rule.resources)))
+            default_wildcards,
+            rule.input,
+            rule.output,
+            smk_resources
+        ))
 
         smk_input = map_custom_wd(workflow, smk_input, root)
         smk_output = map_custom_wd(workflow, smk_output, root)
@@ -89,6 +95,7 @@ def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=Fals
 
         # setup rule arguments
         retval = SnakemakeRuleArgs(
+            resources=smk_resources,
             input=smk_input,
             params=smk_params,
             output=smk_output,
