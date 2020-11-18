@@ -35,17 +35,15 @@ def map_custom_wd(workflow, path_iterable, root="."):
         if os.path.isabs(path):
             return path
 
-        # Otherwise it is relative
-        # Make it absolute
-        # * 1 infer the workdir
+        # Otherwise the path is relative
+        # Make the path absolute
         # https://github.com/Hoeze/snakemk_util/issues/1
+        # Just put together root and path if workdir is None
         if workflow._workdir is None:
-            workdir = os.path.dirname(workflow.snakefile)
+            return os.path.join(root, path)
+        # Otherwise put it in between
         else:
-            workdir = workflow._workdir
-
-        # * 2 Put together root, workdir and path and return
-        return os.path.join(root, workdir, path)
+            return os.path.join(root, workflow._workdir, path)
 
     if isinstance(path_iterable, list):
         return list(map(lambda x: include_custom_wd(workflow, x), path_list))
