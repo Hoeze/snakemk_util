@@ -17,7 +17,6 @@ dev_requirements = [
     "pytest-cov",
 ]
 
-
 setup(
     name='snakemk_util',
     version='0.1.0',

@@ -2,6 +2,11 @@ import os
 from snakemake.workflow import Workflow
 from dataclasses import dataclass
 
+import logging
+
+log = logging.getLogger(__name__)
+
+
 @dataclass
 class SnakemakeRuleArgs:
     resources: dict
@@ -16,7 +21,7 @@ class AttrDict(dict):
     __setattr__ = dict.__setitem__
 
 
-def map_custom_wd(workflow, path_iterable, root="."):
+def map_custom_wd(workflow, path_iterable, root=""):
     """
     Make paths relative to the Snakemake working dir absolute
 
@@ -47,11 +52,12 @@ def map_custom_wd(workflow, path_iterable, root="."):
             return os.path.join(root, workflow._workdir, path)
 
     if isinstance(path_iterable, list):
-        return list(map(lambda x: include_custom_wd(workflow, x), path_list))
+        return list(map(lambda x: include_custom_wd(workflow, x), path_iterable))
     elif isinstance(path_iterable, dict):
         return {k: include_custom_wd(workflow, v) for k, v in path_iterable.items()}
 
-def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=False, create_dir=True, root="."):
+
+def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=False, create_dir=True, root=""):
     """
     Returns a rule object for some default arguments.
     Example usage:
@@ -85,7 +91,6 @@ def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=Fals
         # get rule
         rule = workflow.get_rule(rule_name)
 
-
         smk_resources = AttrDict(rule.resources)
         smk_input = dict(rule.expand_input(default_wildcards)[0])
         smk_output = dict(rule.expand_output(default_wildcards)[0])
@@ -100,19 +105,20 @@ def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=Fals
         smk_input = map_custom_wd(workflow, smk_input, root)
         smk_output = map_custom_wd(workflow, smk_output, root)
 
-
         if create_dir:
             if isinstance(smk_output, list):
                 path_list = smk_output
             elif isinstance(smk_output, dict):
                 path_list = list(smk_output.values())
+            else:
+                raise ValueError("Unknown output type '%s'" % type(smk_output))
 
             for path in path_list:
-                dest_folder = os.path.join(cwd, os.path.dirname(path))
+                dest_folder = os.path.join(os.getcwd(), os.path.dirname(path))
                 if os.path.isdir(dest_folder):
                     pass
                 else:
-                    print(f"Creating output directory {dest_folder}")
+                    log.info(f"Creating output directory {dest_folder}")
                     os.makedirs(dest_folder)
 
         # setup rule arguments
