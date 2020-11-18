@@ -15,7 +15,21 @@ class AttrDict(dict):
     __setattr__ = dict.__setitem__
 
 
-def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=False):
+def map_custom_wd(workflow, path_iterable, root="."):
+
+    def include_custom_wd(workflow, path):
+
+        if path[0] == '/':
+            return path
+        else:
+            return os.path.join(root, workflow._workdir, path)
+
+    if isinstance(path_iterable, list):
+        return list(map(lambda x: include_custom_wd(workflow, x), path_list))
+    elif isinstance(path_iterable, dict):
+        return {k: include_custom_wd(workflow, v) for k, v in path_iterable.items()}
+
+def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=False, create_dir = True, root="."):
     """
     Returns a rule object for some default arguments.
     Example usage:
@@ -49,10 +63,29 @@ def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=Fals
         # get rule
         rule = workflow.get_rule(rule_name)
 
+
         smk_input = dict(rule.expand_input(default_wildcards)[0])
         smk_output = dict(rule.expand_output(default_wildcards)[0])
         smk_params = dict(rule.expand_params(
             default_wildcards, rule.input, rule.output, AttrDict(rule.resources)))
+
+        smk_input = map_custom_wd(workflow, smk_input, root)
+        smk_output = map_custom_wd(workflow, smk_output, root)
+
+
+        if create_dir:
+            if isinstance(smk_output, list):
+                path_list = smk_output
+            elif isinstance(smk_output, dict):
+                path_list = list(smk_output.values())
+
+            for path in path_list:
+                dest_folder = os.path.join(cwd, os.path.dirname(path))
+                if os.path.isdir(dest_folder):
+                    pass
+                else:
+                    print(f"Creating output directory {dest_folder}")
+                    os.makedirs(dest_folder)
 
         # setup rule arguments
         retval = SnakemakeRuleArgs(

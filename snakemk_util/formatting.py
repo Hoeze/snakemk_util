@@ -1,5 +1,3 @@
-
-
 def recursive_format(data, params, fail_on_unknown=False):
     if isinstance(data, str):
         return data.format(**params)
