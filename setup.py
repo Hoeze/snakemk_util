@@ -7,7 +7,14 @@ requirements = [
     "snakemake",
 ]
 
-test_requirements = [
+dev_requirements = [
+    "bumpversion",
+    "wheel",
+    "pytest>=3.3.1",
+    "pytest-xdist",
+    "pytest-pep8",
+    "pytest-mock",
+    "pytest-cov",
 ]
 
 
@@ -22,11 +29,7 @@ setup(
     packages=find_packages(),
     install_requires=requirements,
     extras_require={
-        "develop": ["bumpversion",
-                    "wheel",
-                    "pytest",
-                    "pytest-pep8",
-                    "pytest-cov"],
+        "develop": dev_requirements,
     },
     license="MIT license",
     zip_safe=False,

@@ -1,0 +1,13 @@
+
+
+rule all:
+  input:
+    "testdir/out.txt"
+
+rule samplerule:
+  output:
+    of="{ds_dir}/out.txt"
+  input:
+  shell:
+    "echo 'OK' > {output.of}"
+
