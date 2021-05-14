@@ -1,0 +1,13 @@
+configfile: "configs/config.yaml"
+
+rule all:
+  input:
+    f'{config["testdir_name"]}/out.txt'
+
+rule samplerule:
+  output:
+    of=f'{config["testdir_name"]}/out.txt'
+  input:
+  shell:
+    "echo 'OK' > {output.of}"
+

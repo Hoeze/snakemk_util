@@ -21,7 +21,31 @@ class AttrDict(dict):
     __setattr__ = dict.__setitem__
 
 
-def map_custom_wd(workflow, path_iterable, root=""):
+def include_custom_wd(workflow, path, root=None):
+    # if path is absolute, leave it
+    if os.path.isabs(path):
+        return path
+
+    if root is None:
+        root = ""
+
+    # Otherwise the path is relative
+    if workflow._workdir is not None:
+        if os.path.isabs(workflow._workdir):
+            return os.path.join(workflow._workdir, path)
+        else:
+            # Make the path absolute
+            # https://github.com/Hoeze/snakemk_util/issues/1
+            return os.path.abspath(
+                os.path.join(root, workflow._workdir, path)
+            )
+    else:
+        return os.path.abspath(
+            os.path.join(root, path)
+        )
+
+
+def map_custom_wd(workflow, path_iterable, root=None):
     """
     Make paths relative to the Snakemake working dir absolute
 
@@ -35,55 +59,49 @@ def map_custom_wd(workflow, path_iterable, root=""):
     in Snakefiles (just on the call to this function)
     """
 
-    def include_custom_wd(workflow, path):
-
-        # if path is absolute, leave it
-        if os.path.isabs(path):
-            return path
-
-        # Otherwise the path is relative
-        # Make the path absolute
-        # https://github.com/Hoeze/snakemk_util/issues/1
-        # Just put together root and path if workdir is None
-        if workflow._workdir is None:
-            return os.path.join(root, path)
-        # Otherwise put it in between
-        else:
-            return os.path.join(root, workflow._workdir, path)
-
     if isinstance(path_iterable, list):
-        return list(map(lambda x: include_custom_wd(workflow, x), path_iterable))
+        return list(map(lambda x: include_custom_wd(workflow, x, root=root), path_iterable))
     elif isinstance(path_iterable, dict):
-        return {k: include_custom_wd(workflow, v) for k, v in path_iterable.items()}
+        return {k: include_custom_wd(workflow, v, root=root) for k, v in path_iterable.items()}
 
 
-def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=False, create_dir=True, root=""):
+def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=False, create_dir=True, root=None):
     """
     Returns a rule object for some default arguments.
     Example usage:
         ```
+        snakefile_path = os.getcwd() + "/Snakefile"
+
         try:
             snakemake
         except NameError:
-            snakefile_path = os.getcwd() + "/Snakefile"
-
             snakemake = load_rule_args(
                 snakefile = snakefile_path,
                 rule_name = 'create_prediction_target',
                 default_wildcards={
                     'ds_dir': 'full_data_samplefilter'
-                }
+                },
+                # root = "./" # path relative to snakefile
             )
         ```
     """
     # save current working dir for later
     cwd = os.getcwd()
+
+    if root is None:
+        root = os.path.dirname(snakefile)
+    else:
+        if not os.path.isabs(root):
+            root = os.path.join(os.path.dirname(snakefile), root)
+
+    log.info("root dir: %s", root)
+
     try:
         if default_wildcards == None:
             default_wildcards = dict()
 
-        # change to snakefile directory
-        os.chdir(os.path.dirname(snakefile))
+        # change to root directory
+        os.chdir(root)
 
         # load workflow
         workflow = Workflow(snakefile=snakefile)
