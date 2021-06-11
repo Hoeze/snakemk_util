@@ -1,0 +1,16 @@
+
+
+rule all:
+  input:
+    "testdir/out.a.txt"
+
+rule samplerule:
+  output:
+    of=expand("{{ds_dir}}/out.{x}.txt", x=["a", "b"])
+  input:
+  shell:
+    """
+    echo 'OK' > {output.of[0]}
+    echo 'OK' > {output.of[1]}
+    """
+

@@ -51,3 +51,16 @@ def test_rule_args_workdir(workflow_dir):
     )
 
     assert os.path.isdir(workflow_dir + "/testdir")
+
+def test_output_args(workflow_dir):
+    workflow_dir = copy_data(workflow_dir, "test_output_args")
+
+    snakefile_path = workflow_dir + "/Snakefile"
+
+    snakemake = load_rule_args(
+        snakefile=snakefile_path,
+        rule_name='samplerule',
+        default_wildcards={
+            'ds_dir': 'testdir'
+        },
+    )
