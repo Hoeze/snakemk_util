@@ -11,11 +11,15 @@ log = logging.getLogger(__name__)
 
 @dataclass
 class SnakemakeRuleArgs:
+    threads: int
     resources: dict
     input: dict
     params: dict
     output: dict
     wildcards: dict
+    log: str
+    config: dict
+    rule: str
 
 
 class AttrDict(dict):
@@ -135,6 +139,7 @@ def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=Fals
         rule = workflow.get_rule(rule_name)
 
         smk_resources = AttrDict(rule.resources)
+        smk_threads = smk_resources._cores
         smk_input = dict(rule.expand_input(default_wildcards)[0])
         smk_output = dict(rule.expand_output(default_wildcards)[0])
         smk_params = dict(rule.expand_params(
@@ -143,6 +148,8 @@ def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=Fals
             rule.output,
             smk_resources
         ))
+        smk_log = rule.log
+        smk_config = workflow.config
 
         # Make paths in snakemake inputs and outputs absolute
         smk_input = map_custom_wd(workflow, smk_input, root)
@@ -153,11 +160,15 @@ def load_rule_args(snakefile, rule_name, default_wildcards=None, change_dir=Fals
 
         # setup rule arguments
         retval = SnakemakeRuleArgs(
+            threads=smk_threads,
             resources=smk_resources,
             input=smk_input,
             params=smk_params,
             output=smk_output,
-            wildcards=default_wildcards
+            wildcards=default_wildcards,
+            log=smk_log,
+            config=smk_config,
+            rule=rule_name,
         )
         return retval
     finally:

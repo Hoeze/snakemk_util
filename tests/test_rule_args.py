@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 import shutil
+import json
 
 from snakemk_util import load_rule_args
 
@@ -34,6 +35,8 @@ def test_rule_args(workflow_dir):
         },
     )
 
+    print(json.dumps(snakemake.__dict__, indent=2, default=str))
+
     assert os.path.isdir(workflow_dir + "/testdir")
 
 
@@ -50,6 +53,8 @@ def test_rule_args_workdir(workflow_dir):
         root="../"
     )
 
+    print(json.dumps(snakemake.__dict__, indent=2, default=str))
+
     assert os.path.isdir(workflow_dir + "/testdir")
 
 def test_output_args(workflow_dir):
@@ -64,3 +69,5 @@ def test_output_args(workflow_dir):
             'ds_dir': 'testdir'
         },
     )
+
+    print(json.dumps(snakemake.__dict__, indent=2, default=str))
