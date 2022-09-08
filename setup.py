@@ -22,7 +22,7 @@ dev_requirements = [
 
 setup(
     name='snakemk_util',
-    version='0.3.0',
+    version='0.4.0',
     description="utility functions for snakemake",
     author="Florian Hölzlwimmer",
     author_email='git.ich@frhoelzlwimmer.de',
