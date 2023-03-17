@@ -1,8 +1,11 @@
 configfile: "configs/config.yaml"
 
+include: "side.smk"
+
 rule all:
   input:
     f'{config["testdir_name"]}/out.txt'
+    f'{config["testdir_name"]}/python.done'
 
 rule samplerule:
   output:

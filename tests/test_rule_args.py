@@ -57,6 +57,25 @@ def test_rule_args_workdir(workflow_dir):
 
     assert os.path.isdir(workflow_dir + "/testdir")
 
+
+def test_rule_args_workdir_pythonrule(workflow_dir):
+    workflow_dir = copy_data(workflow_dir, "test_rule_args_workdir")
+
+    snakefile_path = workflow_dir + "/workflow/Snakefile"
+
+    snakemake = load_rule_args(
+        snakefile=snakefile_path,
+        rule_name='pythonrule',
+        default_wildcards={
+        },
+        root="../"
+    )
+
+    print(json.dumps(snakemake.__dict__, indent=2, default=str))
+
+    assert os.path.isdir(workflow_dir + "/testdir")
+
+
 def test_output_args(workflow_dir):
     workflow_dir = copy_data(workflow_dir, "test_output_args")
 
