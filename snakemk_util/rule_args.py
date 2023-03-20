@@ -189,7 +189,7 @@ def load_rule_args(
         if default_wildcards == None:
             default_wildcards = Namedlist()
         else:
-            default_wildcards = Namedlist(default_wildcards)
+            default_wildcards = Namedlist(fromdict=default_wildcards)
 
         # change to root directory
         os.chdir(root)
