@@ -137,14 +137,14 @@ def pretty_print_snakemake(snakemake_obj):
 
 
 def load_rule_args(
-        snakefile,
-        rule_name,
-        default_wildcards=None,
-        change_dir=False,
-        create_dir=True,
-        root=None,
+        snakefile: str,
+        rule_name: str,
+        default_wildcards: Dict[str, str] = None,
+        change_dir: bool = False,
+        create_dir: bool = True,
+        root: str = None,
         flavor: Union[str, Type[script.ScriptBase]] = None,
-):
+) -> Union[str, script.Snakemake]:
     """
     Returns a rule object for some default arguments.
     Example usage:
@@ -162,9 +162,12 @@ def load_rule_args(
                 },
                 # root = "./" # path relative to snakefile
             )
+
+        # uncomment this to reload the Snakemake object after editing the rule input/output/params
+        # snakemake.reload()
         ```
 
-    :param snakefile: absolute path to the root Snakefile
+    :param snakefile: path to the root Snakefile
     :param rule_name: name of the rule
     :param default_wildcards: wildcards in the rule output which are required to format all paths
     :param change_dir: set working directory to the Snakefile root dir
@@ -188,7 +191,7 @@ def load_rule_args(
     try:
         if default_wildcards == None:
             default_wildcards = Namedlist()
-        else:
+        elif not isinstance(default_wildcards, Namedlist):
             default_wildcards = Namedlist(fromdict=default_wildcards)
 
         # change to root directory
@@ -237,9 +240,15 @@ def load_rule_args(
                 None,
                 rule.basedir.get_path_or_uri(),
             )
+            # add function to reload the object for debugging purposes
+            retval.reload = lambda: retval.__dict__.update(reload_snakemake(
+                snakefile=snakefile,
+                snakemake_obj=retval,
+                root=root,
+            ).__dict__)
 
             return retval
-        else:
+        else:  # create script preamble and return as string
             if isinstance(flavor, str):
                 if hasattr(script, flavor):
                     flavor: Type[script.ScriptBase] = getattr(script, flavor)
@@ -283,3 +292,25 @@ def load_rule_args(
         if not change_dir:
             # change back to previous working directory
             os.chdir(cwd)
+
+
+def reload_snakemake(snakefile: str, snakemake_obj: script.Snakemake, root=None) -> script.Snakemake:
+    """
+    Reload snakemake object by re-executing the workflow
+
+    :param snakefile: path to the root Snakefile
+    :param rule_name: name of the rule
+    :param default_wildcards: wildcards in the rule output which are required to format all paths
+    :param change_dir: set working directory to the Snakefile root dir
+    :param create_dir: Create required output folders
+    :param root: Root directory from where you would run the `snakemake` command.
+      By default, this is the folder that contains the root Snakefile (see the `snakefile` argument).
+    """
+    return load_rule_args(
+        snakefile=snakefile,
+        rule_name=snakemake_obj.rule,
+        default_wildcards=snakemake_obj.wildcards,
+        change_dir=False,
+        create_dir=False,
+        root=root,
+    )
