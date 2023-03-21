@@ -7,7 +7,7 @@ import textwrap
 
 def main():
     parser = argparse.ArgumentParser(description=textwrap.dedent("""
-    Utility to create Snakemake script preambles without actually running Snakemake 
+    Utility to sow Snakemake rule contents and creating script preambles without actually running Snakemake. 
     """))
     parser.add_argument(
         "--rule",
@@ -17,12 +17,12 @@ def main():
         help="Name of the rule that should be formatted",
     )
     parser.add_argument(
-        "--script_flavor",
+        "--gen-preamble",
         action="store",
         dest="flavor",
-        default="BashScript",
+        default=None,
         help=textwrap.dedent("""
-        Script language for which the preamble should be generated. If not set, will return a python Snakemake object.
+        Script language for which the preamble should be generated
         Examples: 'BashScript', 'JuliaScript', 'PythonScript', 'RMarkdown', 'RScript', 'RustScript', 'PythonJupyterNotebook', 'RJupyterNotebook'
         """),
     )
@@ -56,21 +56,27 @@ def main():
     )
     args = parser.parse_args()
 
-    from snakemk_util.rule_args import load_rule_args
+    from snakemk_util.rule_args import load_rule_args, pretty_print_snakemake
 
     # parse wildcards
     wildcard_pattern = r'([^=,]+)=([^,]*)'
     wildcards = dict(re.findall(wildcard_pattern, args.wildcards))
 
-    print(load_rule_args(
+    snakemake_obj = load_rule_args(
         snakefile=args.snakefile,
         rule_name=args.rule_name,
         default_wildcards=wildcards,
         change_dir=False,
         create_dir=args.create_dirs,
         root=args.root_dir,
-        flavor=args.flavor
-    ))
+        flavor=args.flavor,
+        add_utility_functions=False,
+    )
+
+    if args.flavor is None:
+        print(pretty_print_snakemake(snakemake_obj))
+    else:
+        print(snakemake_obj)
 
 
 if __name__ == "__main__":

@@ -144,6 +144,7 @@ def load_rule_args(
         create_dir: bool = True,
         root: str = None,
         flavor: Union[str, Type[script.ScriptBase]] = None,
+        add_utility_functions=True,
 ) -> Union[str, script.Snakemake]:
     """
     Returns a rule object for some default arguments.
@@ -176,6 +177,7 @@ def load_rule_args(
       By default, this is the folder that contains the root Snakefile (see the `snakefile` argument).
     :param flavor: Script language for which the preamble should be generated. If not set, will return a python Snakemake object.
         Examples: 'BashScript', 'JuliaScript', 'PythonScript', 'RMarkdown', 'RScript', 'RustScript', 'PythonJupyterNotebook', 'RJupyterNotebook'
+    :param add_utility_functions: Add a reload function to reload the snakemake object by re-executing the workflow for development purposes
     """
     # save current working dir for later
     cwd = os.getcwd()
@@ -240,12 +242,13 @@ def load_rule_args(
                 None,
                 rule.basedir.get_path_or_uri(),
             )
-            # add function to reload the object for debugging purposes
-            retval.reload = lambda: retval.__dict__.update(reload_snakemake(
-                snakefile=snakefile,
-                snakemake_obj=retval,
-                root=root,
-            ).__dict__)
+            if add_utility_functions:
+                # add function to reload the object for debugging purposes
+                retval.reload = lambda: retval.__dict__.update(reload_snakemake(
+                    snakefile=snakefile,
+                    snakemake_obj=retval,
+                    root=root,
+                ).__dict__)
 
             return retval
         else:  # create script preamble and return as string
@@ -299,9 +302,7 @@ def reload_snakemake(snakefile: str, snakemake_obj: script.Snakemake, root=None)
     Reload snakemake object by re-executing the workflow
 
     :param snakefile: path to the root Snakefile
-    :param rule_name: name of the rule
-    :param default_wildcards: wildcards in the rule output which are required to format all paths
-    :param change_dir: set working directory to the Snakefile root dir
+    :param snakemake_obj: the Snakemake object to reload
     :param create_dir: Create required output folders
     :param root: Root directory from where you would run the `snakemake` command.
       By default, this is the folder that contains the root Snakefile (see the `snakefile` argument).
