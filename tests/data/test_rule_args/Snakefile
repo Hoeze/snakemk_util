@@ -1,4 +1,5 @@
 
+print("some random stdout string")
 
 rule all:
   input:

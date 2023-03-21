@@ -2,7 +2,9 @@ import os
 
 import argparse
 import re
+import sys
 import textwrap
+from contextlib import redirect_stdout
 
 
 def main():
@@ -62,16 +64,17 @@ def main():
     wildcard_pattern = r'([^=,]+)=([^,]*)'
     wildcards = dict(re.findall(wildcard_pattern, args.wildcards))
 
-    snakemake_obj = load_rule_args(
-        snakefile=args.snakefile,
-        rule_name=args.rule_name,
-        default_wildcards=wildcards,
-        change_dir=False,
-        create_dir=args.create_dirs,
-        root=args.root_dir,
-        flavor=args.flavor,
-        add_utility_functions=False,
-    )
+    with redirect_stdout(sys.stderr):
+        snakemake_obj = load_rule_args(
+            snakefile=args.snakefile,
+            rule_name=args.rule_name,
+            default_wildcards=wildcards,
+            change_dir=False,
+            create_dir=args.create_dirs,
+            root=args.root_dir,
+            flavor=args.flavor,
+            add_utility_functions=False,
+        )
 
     if args.flavor is None:
         print(pretty_print_snakemake(snakemake_obj))
