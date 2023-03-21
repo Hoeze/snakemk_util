@@ -1,4 +1,4 @@
-__version__ = '0.4.0'
+__version__ = '1.0.0'
 
 from .rule_args import (
     load_rule_args,
