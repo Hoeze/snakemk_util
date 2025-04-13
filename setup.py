@@ -4,7 +4,7 @@
 from setuptools import setup, find_packages
 
 requirements = [
-    "snakemake",
+    "snakemake>=7,<8",
 ]
 
 test_requirements = [
