@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "snakemk_util"
+dynamic = ["version"]
+description = "utility functions for snakemake"
+authors = [
+    { name = "Florian R. Hölzlwimmer", email = "git.ich@frhoelzlwimmer.de" }
+]
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.6"
+dependencies = [
+    "snakemake>=8,<10",
+]
+
+[project.optional-dependencies]
+develop = [
+    "bumpversion",
+    "wheel",
+]
+test = [
+    "pytest>=3.3.1",
+    "pytest-xdist",
+    "pytest-pep8",
+    "pytest-mock",
+    "pytest-cov",
+]
+
+[project.scripts]
+snakemk_util = "snakemk_util.main:main"
+
+[project.urls]
+"Homepage" = "https://github.com/Hoeze/snakemk_util"
+
+[tool.setuptools]
+packages = ["snakemk_util"]
+
+[tool.setuptools.dynamic]
+version = { attr = "snakemk_util.__version__" }

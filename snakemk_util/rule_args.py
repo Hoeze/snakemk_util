@@ -1,9 +1,18 @@
 import os
-from typing import Union, List, Dict, Type
+from typing import Dict, List, Type, Union
 
-from snakemake.workflow import Workflow
-from snakemake.io import Namedlist
+# workaround for https://github.com/snakemake/snakemake/issues/2786
+import snakemake.cli
 from snakemake import script
+from snakemake.io import (
+    InputFiles,
+    Namedlist,
+    OutputFiles,
+    Params,
+    Resources,
+    Wildcards,
+)
+from snakemake.workflow import Workflow
 
 try:
     from snakemake import notebook
@@ -14,28 +23,9 @@ except ImportError:
 
 import copy
 import json
-
 import logging
 
 log = logging.getLogger(__name__)
-
-
-# @dataclass
-# class SnakemakeRuleArgs:
-#     threads: int
-#     resources: dict
-#     input: dict
-#     params: dict
-#     output: dict
-#     wildcards: dict
-#     log: str
-#     config: dict
-#     rule: str
-#
-#
-# class AttrDict(dict):
-#     __getattr__ = dict.__getitem__
-#     __setattr__ = dict.__setitem__
 
 
 def include_custom_wd(workflow, path, root=None):
@@ -47,14 +37,14 @@ def include_custom_wd(workflow, path, root=None):
         root = ""
 
     # Otherwise the path is relative
-    if workflow._workdir is not None:
-        if os.path.isabs(workflow._workdir):
-            return os.path.join(workflow._workdir, path)
+    if workflow.workdir_init is not None:
+        if os.path.isabs(workflow.workdir_init):
+            return os.path.join(workflow.workdir_init, path)
         else:
             # Make the path absolute
             # https://github.com/Hoeze/snakemk_util/issues/1
             return os.path.abspath(
-                os.path.join(root, workflow._workdir, path)
+                os.path.join(root, workflow.workdir_init, path)
             )
     else:
         return os.path.abspath(
@@ -139,13 +129,13 @@ def pretty_print_snakemake(snakemake_obj):
 def load_rule_args(
         snakefile: str,
         rule_name: str,
-        default_wildcards: Dict[str, str] = None,
+        default_wildcards: Union[Dict[str, str], Wildcards]  = None,
         change_dir: bool = False,
         create_dir: bool = True,
         root: str = None,
         flavor: Union[str, Type[script.ScriptBase]] = None,
         add_utility_functions=True,
-) -> Union[str, script.Snakemake]:
+) -> Union[str, script.Snakemake, None]:
     """
     Returns a rule object for some default arguments.
     Example usage:
@@ -192,29 +182,65 @@ def load_rule_args(
 
     try:
         if default_wildcards == None:
-            default_wildcards = Namedlist()
-        elif not isinstance(default_wildcards, Namedlist):
-            default_wildcards = Namedlist(fromdict=default_wildcards)
+            default_wildcards = Wildcards()
+        elif not isinstance(default_wildcards, Wildcards):
+            default_wildcards = Wildcards(fromdict=default_wildcards)
 
         # change to root directory
         os.chdir(root)
 
         # load workflow
-        workflow = Workflow(snakefile=snakefile)
+        workflow = Workflow(
+            resource_settings=snakemake.workflow.ResourceSettings(
+                # cores=args.cores,
+                # nodes=args.jobs,
+                # local_cores=args.local_cores,
+                # max_threads=args.max_threads,
+                # resources=args.resources,
+                # overwrite_threads=args.set_threads,
+                # overwrite_scatter=args.set_scatter,
+                # overwrite_resource_scopes=args.set_resource_scopes,
+                # overwrite_resources=args.set_resources,
+                # default_resources=args.default_resources,
+            ),
+            config_settings=snakemake.workflow.ConfigSettings(
+                # config=args.config,
+                # configfiles=args.configfile,
+            ),
+            storage_settings=snakemake.workflow.StorageSettings(),
+            # storage_provider_settings=storage_provider_settings,
+            workflow_settings=snakemake.workflow.WorkflowSettings(
+                # wrapper_prefix=args.wrapper_prefix,
+                # exec_mode=args.mode,
+                # cache=args.cache,
+            ),
+            deployment_settings=snakemake.workflow.DeploymentSettings(
+                # deployment_method=deployment_method,
+                # fs_mode=args.software_deployment_fs_mode,
+                # conda_prefix=args.conda_prefix,
+                # conda_cleanup_pkgs=args.conda_cleanup_pkgs,
+                # conda_base_path=args.conda_base_path,
+                # conda_frontend=args.conda_frontend,
+                # conda_not_block_search_path_envvars=args.conda_not_block_search_path_envvars,
+                # apptainer_args=args.apptainer_args,
+                # apptainer_prefix=args.apptainer_prefix,
+            ),
+            overwrite_workdir=root,
+        )
         workflow.include(snakefile)
         # get rule
         rule = workflow.get_rule(rule_name)
 
-        smk_input = rule.expand_input(default_wildcards)[0]
-        smk_resources = rule.expand_resources(default_wildcards, smk_input, attempt=1)
+        smk_input = InputFiles(rule.expand_input(default_wildcards)[0])
+        smk_resources = Resources(rule.expand_resources(default_wildcards, smk_input, attempt=1))
         smk_threads = smk_resources._cores
-        smk_output = rule.expand_output(default_wildcards)[0]
-        smk_params = rule.expand_params(
+        smk_output = OutputFiles(rule.expand_output(default_wildcards)[0])
+        smk_params = Params(rule.expand_params(
             default_wildcards,
             rule.input,
             rule.output,
             smk_resources
-        )
+        ))
         smk_log = rule.log
         smk_config = workflow.config
 
@@ -279,7 +305,7 @@ def load_rule_args(
                 conda_env=rule.conda_env,
                 conda_base_path=workflow.conda_base_path,
                 container_img=rule.container_img,
-                singularity_args=workflow.singularity_args,
+                singularity_args=workflow.deployment_settings.apptainer_args,
                 env_modules=rule.env_modules,
                 bench_record=None,
                 jobid=0,

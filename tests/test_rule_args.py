@@ -1,9 +1,7 @@
-import pytest
-import pandas as pd
-import numpy as np
 import os
 import shutil
-import json
+
+import pytest
 
 from snakemk_util import load_rule_args, pretty_print_snakemake
 
@@ -84,7 +82,7 @@ def test_rule_args_workdir(workflow_dir):
         root="../"
     )
 
-    pretty_print_snakemake(snakemake)
+    print(pretty_print_snakemake(snakemake))
 
     assert os.path.isdir(workflow_dir + "/testdir")
 
@@ -120,4 +118,4 @@ def test_output_args(workflow_dir):
         },
     )
 
-    pretty_print_snakemake(snakemake)
+    print(pretty_print_snakemake(snakemake))
