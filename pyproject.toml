@@ -11,15 +11,17 @@ authors = [
 ]
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.6"
+requires-python = ">=3.11"
 dependencies = [
-    "snakemake>=8,<10",
+    "snakemake>=9,<10",
 ]
 
 [project.optional-dependencies]
 develop = [
     "bumpversion",
     "wheel",
+    "tox>=4",
+    "tox-uv",
 ]
 test = [
     "pytest>=3.3.1",
@@ -40,3 +42,25 @@ packages = ["snakemk_util"]
 
 [tool.setuptools.dynamic]
 version = { attr = "snakemk_util.__version__" }
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.tox]
+requires = ["tox>=4", "tox-uv"]
+env_list = ["lint", "py{311,312,313,314}"]
+
+[tool.tox.env_run_base]
+description = "Run tests with pytest"
+deps = ["pytest>=3.3.1", "pytest-xdist", "pytest-cov", "pytest-mock"]
+commands = [["pytest", "{posargs:tests}"]]
+
+[tool.tox.env.lint]
+description = "Run linting with ruff"
+skip_install = true
+deps = ["ruff"]
+commands = [["ruff", "check", "."], ["ruff", "format", "--check", "."]]

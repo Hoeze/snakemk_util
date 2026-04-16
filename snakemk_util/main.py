@@ -8,9 +8,11 @@ from contextlib import redirect_stdout
 
 
 def main():
-    parser = argparse.ArgumentParser(description=textwrap.dedent("""
+    parser = argparse.ArgumentParser(
+        description=textwrap.dedent("""
     Utility to sow Snakemake rule contents and creating script preambles without actually running Snakemake. 
-    """))
+    """)
+    )
     parser.add_argument(
         "--rule",
         action="store",
@@ -61,7 +63,7 @@ def main():
     from snakemk_util.rule_args import load_rule_args, pretty_print_snakemake
 
     # parse wildcards
-    wildcard_pattern = r'([^=,]+)=([^,]*)'
+    wildcard_pattern = r"([^=,]+)=([^,]*)"
     wildcards = dict(re.findall(wildcard_pattern, args.wildcards))
 
     with redirect_stdout(sys.stderr):
