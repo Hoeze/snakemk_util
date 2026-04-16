@@ -7,7 +7,7 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+*"
 
 env:
-  UV_VERSION: "0.8.5"
+  UV_VERSION: "0.11.6"
 
 jobs:
   build-and-publish:
