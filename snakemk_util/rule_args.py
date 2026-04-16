@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 import logging
 import os
-from typing import Dict, List, Type, Union, overload
+from typing import cast, overload
 
 # workaround for https://github.com/snakemake/snakemake/issues/2786
 import snakemake.cli
@@ -25,7 +27,7 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 
-def include_custom_wd(workflow, path, root=None):
+def include_custom_wd(workflow: Workflow, path: str, root: str | None = None) -> str:
     # if path is absolute, leave it
     if os.path.isabs(path):
         return path
@@ -45,7 +47,7 @@ def include_custom_wd(workflow, path, root=None):
         return os.path.abspath(os.path.join(root, path))
 
 
-def map_custom_wd(workflow, path_iterable, root=None):
+def map_custom_wd(workflow: Workflow, path_iterable: Namedlist | list | dict | str, root: str | None = None):
     """
     Make paths relative to the Snakemake working dir absolute
 
@@ -72,7 +74,7 @@ def map_custom_wd(workflow, path_iterable, root=None):
         return include_custom_wd(workflow, str(path_iterable), root=root)
 
 
-def mk_dirs(paths: Union[str, List, Dict]):
+def mk_dirs(paths: str | list | dict) -> None:
     if isinstance(paths, list):
         for p in paths:
             mk_dirs(p)
@@ -88,7 +90,7 @@ def mk_dirs(paths: Union[str, List, Dict]):
             os.makedirs(dest_folder)
 
 
-def _pretty_format_smk(snakemake_obj):
+def _pretty_format_smk(snakemake_obj: object) -> object:
     if isinstance(snakemake_obj, Namedlist):
         # directly build string representation
         retval = {}
@@ -107,7 +109,7 @@ def _pretty_format_smk(snakemake_obj):
         return snakemake_obj
 
 
-def pretty_print_snakemake(snakemake_obj):
+def pretty_print_snakemake(snakemake_obj: script.Snakemake) -> str:
     """
     Pretty-print a snakemake object for better inspection of its contents
     """
@@ -118,10 +120,10 @@ def pretty_print_snakemake(snakemake_obj):
 def load_rule_args(
     snakefile: str,
     rule_name: str,
-    default_wildcards: Union[Dict[str, str], Wildcards] = ...,
+    default_wildcards: dict[str, str] | Wildcards = ...,
     change_dir: bool = ...,
     create_dir: bool = ...,
-    root: str = ...,
+    root: str | None = ...,
     flavor: None = ...,
     add_utility_functions: bool = ...,
 ) -> script.Snakemake: ...
@@ -131,11 +133,11 @@ def load_rule_args(
 def load_rule_args(
     snakefile: str,
     rule_name: str,
-    default_wildcards: Union[Dict[str, str], Wildcards] = ...,
+    default_wildcards: dict[str, str] | Wildcards = ...,
     change_dir: bool = ...,
     create_dir: bool = ...,
-    root: str = ...,
-    flavor: Union[str, Type[script.ScriptBase]] = ...,
+    root: str | None = ...,
+    flavor: str | type[script.ScriptBase] = ...,
     add_utility_functions: bool = ...,
 ) -> str: ...
 
@@ -143,13 +145,13 @@ def load_rule_args(
 def load_rule_args(
     snakefile: str,
     rule_name: str,
-    default_wildcards: Union[Dict[str, str], Wildcards] = None,
+    default_wildcards: dict[str, str] | Wildcards = None,
     change_dir: bool = False,
     create_dir: bool = True,
-    root: str = None,
-    flavor: Union[str, Type[script.ScriptBase], None] = None,
-    add_utility_functions=True,
-) -> Union[str, script.Snakemake]:
+    root: str | None = None,
+    flavor: str | type[script.ScriptBase] | None = None,
+    add_utility_functions: bool = True,
+) -> str | script.Snakemake:
     """
     Returns a rule object for some default arguments.
     Example usage:
@@ -269,9 +271,9 @@ def load_rule_args(
         else:  # create script preamble and return as string
             if isinstance(flavor, str):
                 if hasattr(script, flavor):
-                    flavor: Type[script.ScriptBase] = getattr(script, flavor)
-                elif hasattr(notebook, flavor):
-                    flavor: Type[script.ScriptBase] = getattr(notebook, flavor)
+                    flavor = cast(type[script.ScriptBase], getattr(script, flavor))
+                elif notebook is not None and hasattr(notebook, flavor):
+                    flavor = cast(type[script.ScriptBase], getattr(notebook, flavor))
 
             # check correct type of `flavor`
             if not isinstance(flavor, type) or not issubclass(flavor, script.ScriptBase):
@@ -313,7 +315,7 @@ def load_rule_args(
             os.chdir(cwd)
 
 
-def reload_snakemake(snakefile: str, snakemake_obj: script.Snakemake, root=None) -> script.Snakemake:
+def reload_snakemake(snakefile: str, snakemake_obj: script.Snakemake, root: str | None = None) -> script.Snakemake:
     """
     Reload snakemake object by re-executing the workflow
 

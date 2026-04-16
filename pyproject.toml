@@ -36,6 +36,7 @@ test = [
 ]
 lint = [
     "ruff",
+    "mypy",
 ]
 
 [tool.setuptools]
@@ -57,7 +58,7 @@ select = ["E", "F", "W", "I"]
 
 [tool.tox]
 requires = ["tox>=4", "tox-uv"]
-env_list = ["format-check", "lints", "py3.11", "py3.14"]
+env_list = ["format-check", "lints", "typecheck", "py3.11", "py3.14"]
 isolated_build = true
 
 [tool.tox.env_run_base]
@@ -77,6 +78,15 @@ runner = "uv-venv-lock-runner"
 skip_install = true
 dependency_groups = ["lint"]
 commands = [["ruff", "check", "."]]
+
+[tool.tox.env."typecheck"]
+runner = "uv-venv-lock-runner"
+dependency_groups = ["lint"]
+commands = [["mypy", "snakemk_util"]]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 addopts = ["--import-mode=importlib"]

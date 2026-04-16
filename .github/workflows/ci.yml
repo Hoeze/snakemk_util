@@ -25,7 +25,10 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        run: uv python install 3.11
+        run: uv python install 3.14
+
+      - name: Ensure uv lockfile is up-to-date
+        run: uv lock --check
 
       - name: Install project dependencies
         run: uv sync --all-groups
@@ -35,6 +38,9 @@ jobs:
 
       - name: Linting
         run: uv run tox -e lints
+
+      - name: Run type checking
+        run: uv run tox -e typecheck
 
   test:
     name: Test (Python ${{ matrix.python-version }})
