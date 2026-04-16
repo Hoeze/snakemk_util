@@ -1,6 +1,5 @@
-import os
-
 import argparse
+import os
 import re
 import sys
 import textwrap
@@ -8,9 +7,11 @@ from contextlib import redirect_stdout
 
 
 def main():
-    parser = argparse.ArgumentParser(description=textwrap.dedent("""
-    Utility to sow Snakemake rule contents and creating script preambles without actually running Snakemake. 
-    """))
+    parser = argparse.ArgumentParser(
+        description=textwrap.dedent("""
+    Utility to sow Snakemake rule contents and creating script preambles without actually running Snakemake.
+    """)
+    )
     parser.add_argument(
         "--rule",
         action="store",
@@ -24,8 +25,9 @@ def main():
         dest="flavor",
         default=None,
         help=textwrap.dedent("""
-        Script language for which the preamble should be generated
-        Examples: 'BashScript', 'JuliaScript', 'PythonScript', 'RMarkdown', 'RScript', 'RustScript', 'PythonJupyterNotebook', 'RJupyterNotebook'
+        Script language for which the preamble should be generated.
+        Examples: 'BashScript', 'JuliaScript', 'PythonScript', 'RMarkdown',
+        'RScript', 'RustScript', 'PythonJupyterNotebook', 'RJupyterNotebook'
         """),
     )
     parser.add_argument(
@@ -40,14 +42,20 @@ def main():
         action="store",
         dest="root_dir",
         default=os.getcwd(),
-        help="Root directory from where you would run the `snakemake` command. By default, this is the current working directory.",
+        help=(
+            "Root directory from where you would run the `snakemake` command. "
+            "By default, this is the current working directory."
+        ),
     )
     parser.add_argument(
         "--wildcards",
         action="store",
         dest="wildcards",
         default="",
-        help="Comma-separated key-value list of wildcards which should be used to format the rule output. Example: 'wildcard0=x,wildcard1=y",
+        help=(
+            "Comma-separated key-value list of wildcards which should be used "
+            "to format the rule output. Example: 'wildcard0=x,wildcard1=y'"
+        ),
     )
     parser.add_argument(
         "--create_dirs",
@@ -61,7 +69,7 @@ def main():
     from snakemk_util.rule_args import load_rule_args, pretty_print_snakemake
 
     # parse wildcards
-    wildcard_pattern = r'([^=,]+)=([^,]*)'
+    wildcard_pattern = r"([^=,]+)=([^,]*)"
     wildcards = dict(re.findall(wildcard_pattern, args.wildcards))
 
     with redirect_stdout(sys.stderr):

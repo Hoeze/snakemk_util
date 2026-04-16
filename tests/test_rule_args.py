@@ -27,10 +27,8 @@ def test_rule_args(workflow_dir):
 
     snakemake = load_rule_args(
         snakefile=snakefile_path,
-        rule_name='samplerule',
-        default_wildcards={
-            'ds_dir': 'testdir'
-        },
+        rule_name="samplerule",
+        default_wildcards={"ds_dir": "testdir"},
     )
 
     print(pretty_print_snakemake(snakemake))
@@ -45,10 +43,8 @@ def test_reload(workflow_dir):
 
     snakemake = load_rule_args(
         snakefile=snakefile_path,
-        rule_name='samplerule',
-        default_wildcards={
-            'ds_dir': 'testdir'
-        },
+        rule_name="samplerule",
+        default_wildcards={"ds_dir": "testdir"},
     )
 
     import re
@@ -74,13 +70,7 @@ def test_rule_args_workdir(workflow_dir):
 
     snakefile_path = workflow_dir + "/workflow/Snakefile"
 
-    snakemake = load_rule_args(
-        snakefile=snakefile_path,
-        rule_name='samplerule',
-        default_wildcards={
-        },
-        root="../"
-    )
+    snakemake = load_rule_args(snakefile=snakefile_path, rule_name="samplerule", default_wildcards={}, root="../")
 
     print(pretty_print_snakemake(snakemake))
 
@@ -92,13 +82,7 @@ def test_rule_args_workdir_pythonrule(workflow_dir):
 
     snakefile_path = workflow_dir + "/workflow/Snakefile"
 
-    snakemake = load_rule_args(
-        snakefile=snakefile_path,
-        rule_name='pythonrule',
-        default_wildcards={
-        },
-        root="../"
-    )
+    snakemake = load_rule_args(snakefile=snakefile_path, rule_name="pythonrule", default_wildcards={}, root="../")
 
     pretty_print_snakemake(snakemake)
 
@@ -112,10 +96,8 @@ def test_output_args(workflow_dir):
 
     snakemake = load_rule_args(
         snakefile=snakefile_path,
-        rule_name='samplerule',
-        default_wildcards={
-            'ds_dir': 'testdir'
-        },
+        rule_name="samplerule",
+        default_wildcards={"ds_dir": "testdir"},
     )
 
     print(pretty_print_snakemake(snakemake))

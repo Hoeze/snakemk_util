@@ -11,22 +11,9 @@ authors = [
 ]
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.6"
+requires-python = ">=3.11"
 dependencies = [
-    "snakemake>=8,<10",
-]
-
-[project.optional-dependencies]
-develop = [
-    "bumpversion",
-    "wheel",
-]
-test = [
-    "pytest>=3.3.1",
-    "pytest-xdist",
-    "pytest-pep8",
-    "pytest-mock",
-    "pytest-cov",
+    "snakemake>=9,<10",
 ]
 
 [project.scripts]
@@ -35,8 +22,71 @@ snakemk_util = "snakemk_util.main:main"
 [project.urls]
 "Homepage" = "https://github.com/Hoeze/snakemk_util"
 
+[dependency-groups]
+dev = [
+    "bumpversion",
+    "tox>=4",
+    "tox-uv",
+]
+test = [
+    "pytest>=8,<9",
+    "pytest-xdist",
+    "pytest-mock",
+    "pytest-cov",
+]
+lint = [
+    "ruff",
+    "mypy",
+]
+
 [tool.setuptools]
 packages = ["snakemk_util"]
 
 [tool.setuptools.dynamic]
 version = { attr = "snakemk_util.__version__" }
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S", "SIM", "PLR"]
+"__init__.py" = ["F401"]
+
+[tool.tox]
+requires = ["tox>=4", "tox-uv"]
+env_list = ["format-check", "lints", "typecheck", "py3.11", "py3.14"]
+isolated_build = true
+
+[tool.tox.env_run_base]
+runner = "uv-venv-lock-runner"
+description = "run unit tests"
+dependency_groups = ["test"]
+commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
+
+[tool.tox.env."format-check"]
+runner = "uv-venv-lock-runner"
+skip_install = true
+dependency_groups = ["lint"]
+commands = [["ruff", "format", "--check", "."]]
+
+[tool.tox.env."lints"]
+runner = "uv-venv-lock-runner"
+skip_install = true
+dependency_groups = ["lint"]
+commands = [["ruff", "check", "."]]
+
+[tool.tox.env."typecheck"]
+runner = "uv-venv-lock-runner"
+dependency_groups = ["lint"]
+commands = [["mypy", "snakemk_util"]]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
