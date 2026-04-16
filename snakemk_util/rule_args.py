@@ -1,7 +1,7 @@
-import os
 import json
 import logging
-from typing import Dict, List, Literal, Type, Union, overload
+import os
+from typing import Dict, List, Type, Union, overload
 
 # workaround for https://github.com/snakemake/snakemake/issues/2786
 import snakemake.cli
@@ -262,7 +262,6 @@ def load_rule_args(
                         snakefile=snakefile,
                         snakemake_obj=retval,
                         root=root,
-                        create_dir=create_dir,
                     ).__dict__
                 )
 
@@ -314,13 +313,12 @@ def load_rule_args(
             os.chdir(cwd)
 
 
-def reload_snakemake(snakefile: str, snakemake_obj: script.Snakemake, create_dir=False, root=None) -> script.Snakemake:
+def reload_snakemake(snakefile: str, snakemake_obj: script.Snakemake, root=None) -> script.Snakemake:
     """
     Reload snakemake object by re-executing the workflow
 
     :param snakefile: path to the root Snakefile
     :param snakemake_obj: the Snakemake object to reload
-    :param create_dir: Create required output folders
     :param root: Root directory from where you would run the `snakemake` command.
       By default, this is the folder that contains the root Snakefile (see the `snakefile` argument).
     """
@@ -329,6 +327,6 @@ def reload_snakemake(snakefile: str, snakemake_obj: script.Snakemake, create_dir
         rule_name=snakemake_obj.rule,
         default_wildcards=snakemake_obj.wildcards,
         change_dir=False,
-        create_dir=create_dir,
+        create_dir=False,
         root=root,
     )
