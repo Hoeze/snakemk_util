@@ -1,0 +1,16 @@
+ds_config = {"testdir": {"assembly": "GRCh37"}}
+
+rule all:
+  input:
+    "testdir/out.txt"
+
+rule samplerule:
+  output:
+    of="{ds_dir}/out.txt"
+  input:
+  params:
+    assembly=lambda wildcards: ds_config[wildcards.ds_dir]["assembly"],
+    output_basedir="some/base",
+    nb_script="script.py",
+  shell:
+    "echo 'OK' > {output.of}"

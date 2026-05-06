@@ -229,7 +229,7 @@ def load_rule_args(
         smk_resources = rule.expand_resources(default_wildcards, smk_input, attempt=1)
         smk_threads = smk_resources._cores
         smk_output = OutputFiles(rule.expand_output(default_wildcards)[0])
-        smk_params = Params(rule.expand_params(default_wildcards, smk_input, smk_output, None))
+        smk_params = Params(rule.expand_params(default_wildcards, smk_input, smk_output, None)[0])
         smk_log = rule.log
         smk_config = workflow.config
 
