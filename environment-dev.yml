@@ -1,0 +1,9 @@
+name: snakemk_util
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  # common
+  - python >=3.13
+  - uv =0.11
