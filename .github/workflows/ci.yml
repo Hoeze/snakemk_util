@@ -29,7 +29,6 @@ jobs:
         run: uv python install 3.14
 
       - name: Ensure uv lockfile is up-to-date
-        if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release-please--')
         run: uv lock --check
 
       - name: Install project dependencies
