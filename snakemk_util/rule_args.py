@@ -120,7 +120,7 @@ def pretty_print_snakemake(snakemake_obj: script.Snakemake) -> str:
 def load_rule_args(
     snakefile: str,
     rule_name: str,
-    default_wildcards: dict[str, str] | Wildcards = ...,
+    default_wildcards: dict[str, str] | Wildcards | None = ...,
     change_dir: bool = ...,
     create_dir: bool = ...,
     root: str | None = ...,
@@ -133,7 +133,7 @@ def load_rule_args(
 def load_rule_args(
     snakefile: str,
     rule_name: str,
-    default_wildcards: dict[str, str] | Wildcards = ...,
+    default_wildcards: dict[str, str] | Wildcards | None = ...,
     change_dir: bool = ...,
     create_dir: bool = ...,
     root: str | None = ...,
@@ -145,7 +145,7 @@ def load_rule_args(
 def load_rule_args(
     snakefile: str,
     rule_name: str,
-    default_wildcards: dict[str, str] | Wildcards = None,
+    default_wildcards: dict[str, str] | Wildcards | None = None,
     change_dir: bool = False,
     create_dir: bool = True,
     root: str | None = None,
