@@ -3,10 +3,15 @@ name: Release Please
 on:
   push:
     branches: [master]
+  workflow_dispatch:
 
 permissions:
   contents: write
   pull-requests: write
+
+env:
+  UV_VERSION: "0.11.6"
+  UV_PYTHON_PREFERENCE: "managed"
 
 jobs:
   release-please:
@@ -15,9 +20,52 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
+      prs: ${{ steps.release.outputs.prs }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  refresh-lock:
+    name: Refresh uv.lock on release PR
+    needs: release-please
+    if: ${{ needs.release-please.outputs.prs != '' && needs.release-please.outputs.prs != '[]' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Determine release PR branch
+        id: branch
+        run: |
+          BRANCH=$(echo '${{ needs.release-please.outputs.prs }}' | jq -r '.[0].headBranchName')
+          echo "name=$BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout release PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.branch.outputs.name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.14
+
+      - name: Refresh uv.lock
+        run: |
+          uv lock
+          if git diff --quiet uv.lock; then
+            echo "uv.lock already in sync — nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add uv.lock
+          git commit -m "chore: refresh uv.lock for release"
+          git push
