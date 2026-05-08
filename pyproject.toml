@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "snakemk_util"
-dynamic = ["version"]
+version = "2.0.0"
 description = "utility functions for snakemake"
 authors = [
     { name = "Florian R. Hölzlwimmer", email = "git.ich@frhoelzlwimmer.de" }
@@ -24,7 +24,6 @@ snakemk_util = "snakemk_util.main:main"
 
 [dependency-groups]
 dev = [
-    "bumpversion",
     "tox>=4",
     "tox-uv",
 ]
@@ -41,9 +40,6 @@ lint = [
 
 [tool.setuptools]
 packages = ["snakemk_util"]
-
-[tool.setuptools.dynamic]
-version = { attr = "snakemk_util.__version__" }
 
 [tool.ruff]
 target-version = "py311"
