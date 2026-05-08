@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/Hoeze/snakemk_util/compare/v2.0.1...v2.0.2) (2026-05-08)
+
+
+### Miscellaneous Chores
+
+* trigger v2.0.2 release ([1e52612](https://github.com/Hoeze/snakemk_util/commit/1e52612cbdb7ae4f5330c3f77cc99c0537570863))
+
 ## [2.0.1](https://github.com/Hoeze/snakemk_util/compare/v2.0.0...v2.0.1) (2026-05-08)
 
 

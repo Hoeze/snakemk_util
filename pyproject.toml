@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "snakemk_util"
-version = "2.0.1"
+version = "2.0.2"
 description = "utility functions for snakemake"
 authors = [
     { name = "Florian R. Hölzlwimmer", email = "git.ich@frhoelzlwimmer.de" }
