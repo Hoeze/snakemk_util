@@ -8,14 +8,14 @@ name: Snakemake compatibility
 # not tested before.
 #
 # Trigger paths:
-#   - schedule: backstop poll every 6h
+#   - schedule: backstop daily poll
 #   - workflow_dispatch: manual run
 #   - repository_dispatch (snakemake-release): external bot can ping us
 #     directly so we don't have to wait for the next cron tick
 
 on:
   schedule:
-    - cron: "17 */6 * * *"
+    - cron: "17 6 * * *"
   workflow_dispatch:
   repository_dispatch:
     types: [snakemake-release]
