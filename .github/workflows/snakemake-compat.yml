@@ -1,9 +1,11 @@
 name: Snakemake compatibility
 
 # Re-runs the test suite against the latest snakemake release that
-# satisfies our version constraint. The detect job polls snakemake's
-# GitHub releases and gates the compat job through actions/cache so the
-# tests only execute when a new upstream tag appears.
+# satisfies our version constraint. The detect job asks `uv` itself
+# what would be resolved if `uv.lock` were upgraded for snakemake; the
+# resolved version is used as the actions/cache key, so the matrix
+# only runs when the upgrade would land on a snakemake version we have
+# not tested before.
 #
 # Trigger paths:
 #   - schedule: backstop poll every 6h
@@ -27,38 +29,42 @@ permissions:
 
 jobs:
   detect:
-    name: Detect new snakemake release
+    name: Resolve latest snakemake
     runs-on: ubuntu-latest
     outputs:
-      tag: ${{ steps.fetch.outputs.tag }}
+      version: ${{ steps.resolve.outputs.version }}
       changed: ${{ steps.cache.outputs.cache-hit != 'true' }}
     steps:
-      - name: Fetch latest snakemake release tag
-        id: fetch
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          tag=$(gh api repos/snakemake/snakemake/releases/latest --jq .tag_name)
-          if [ -z "$tag" ] || [ "$tag" = "null" ]; then
-            echo "Failed to resolve latest snakemake release tag" >&2
-            exit 1
-          fi
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "Latest snakemake release: $tag"
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Check whether this tag has already been compat-tested
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Resolve latest snakemake under current constraint
+        id: resolve
+        run: |
+          uv lock --upgrade-package snakemake
+          version=$(python3 -c 'import tomllib; d=tomllib.load(open("uv.lock","rb")); print(next(p["version"] for p in d["package"] if p["name"]=="snakemake"))')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Resolved snakemake==$version"
+
+      - name: Check whether this resolved version has already been tested
         uses: actions/cache@v4
         id: cache
         with:
           path: .snakemake-compat-marker
-          key: snakemake-compat-${{ steps.fetch.outputs.tag }}
+          key: snakemake-compat-${{ steps.resolve.outputs.version }}
 
-      - name: Record marker for new tag
+      - name: Record marker for new version
         if: steps.cache.outputs.cache-hit != 'true'
-        run: echo "${{ steps.fetch.outputs.tag }}" > .snakemake-compat-marker
+        run: echo "${{ steps.resolve.outputs.version }}" > .snakemake-compat-marker
 
   compat:
-    name: Test against snakemake ${{ needs.detect.outputs.tag }} (Python ${{ matrix.python-version }})
+    name: Test against snakemake ${{ needs.detect.outputs.version }} (Python ${{ matrix.python-version }})
     needs: detect
     if: |
       needs.detect.outputs.changed == 'true'
@@ -84,9 +90,6 @@ jobs:
 
       - name: Upgrade snakemake in uv.lock
         run: uv lock --upgrade-package snakemake
-
-      - name: Show resolved snakemake version
-        run: uv tree --package snakemake | head -5
 
       - name: Install project dependencies
         run: uv sync --all-groups
