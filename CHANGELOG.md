@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.0.0](https://github.com/Hoeze/snakemk_util/compare/v2.0.2...v3.0.0) (2026-05-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **cli:** `--wildcards` no longer accepts a single comma-separated string. Callers must pass each pair as its own argv token, e.g. `--wildcards k1=v1 k2=v2` instead of `--wildcards "k1=v1,k2=v2"`. A legacy comma-separated string is now silently interpreted as a single value containing commas, since the new contract allows commas in values.
+
+### Features
+
+* **cli:** take --wildcards as repeated key=value tokens ([#13](https://github.com/Hoeze/snakemk_util/issues/13)) ([41afc05](https://github.com/Hoeze/snakemk_util/commit/41afc054c853cc3ff78bd4d846b0a2616d0a6f14))
+
+
+### Bug Fixes
+
+* address review findings across CLI, types, formatting, and R docs ([#11](https://github.com/Hoeze/snakemk_util/issues/11)) ([8f2ed20](https://github.com/Hoeze/snakemk_util/commit/8f2ed20bcfe983101bba5fa613e81b94e937f565))
+
 ## [2.0.2](https://github.com/Hoeze/snakemk_util/compare/v2.0.1...v2.0.2) (2026-05-08)
 
 
