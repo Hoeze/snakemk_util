@@ -62,9 +62,8 @@ if (! exists("snakemake")) {
     snakefile = "Snakefile"
     rule = "create_prediction_target"
     python = "/opt/anaconda/envs/snakemake/bin/python"
-    wildcards = paste(
-        # 'comparison=all',
-        sep=','
+    wildcards = c(
+        # "comparison=all",
     )
 
     cmd=c(
@@ -72,9 +71,9 @@ if (! exists("snakemake")) {
         "--rule", rule,
         "--snakefile", normalizePath(snakefile),
         "--root_dir", dirname(normalizePath(snakefile)),
-        "--wildcards", paste0('"', wildcards, '"'),
         "--gen-preamble", "RScript",
-        "--create_dirs"
+        "--create_dirs",
+        if (length(wildcards) > 0) c("--wildcards", wildcards) else NULL
     )
     eval(parse(text=system2(python, cmd, stdout=TRUE, stderr="")))
 }
@@ -85,7 +84,7 @@ if (! exists("snakemake")) {
 
 ```bash
 # snakemk_util --help
-usage: snakemk_util [-h] --rule RULE_NAME [--gen-preamble FLAVOR] [--snakefile SNAKEFILE] [--root_dir ROOT_DIR] [--wildcards WILDCARDS] [--create_dirs]
+usage: snakemk_util [-h] --rule RULE_NAME [--gen-preamble FLAVOR] [--snakefile SNAKEFILE] [--root_dir ROOT_DIR] [--wildcards [KEY=VALUE ...]] [--create_dirs]
 
 Utility to sow Snakemake rule contents and creating script preambles without actually running Snakemake.
 
@@ -97,8 +96,8 @@ optional arguments:
   --snakefile SNAKEFILE
                         path to the Snakefile
   --root_dir ROOT_DIR   Root directory from where you would run the `snakemake` command. By default, this is the current working directory.
-  --wildcards WILDCARDS
-                        Comma-separated key-value list of wildcards which should be used to format the rule output. Example: 'wildcard0=x,wildcard1=y
+  --wildcards [KEY=VALUE ...]
+                        Wildcards used to format the rule output, given as space-separated 'key=value' tokens. Example: --wildcards wildcard0=x wildcard1=y
   --create_dirs         Create the output directories for the rule
 ```
 
