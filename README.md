@@ -59,6 +59,7 @@ Snakemake({
 Here the corresponding snippet for R:
 ```R
 if (! exists("snakemake")) {
+    snakefile = "Snakefile"
     rule = "create_prediction_target"
     python = "/opt/anaconda/envs/snakemake/bin/python"
     wildcards = paste(
@@ -70,9 +71,9 @@ if (! exists("snakemake")) {
         "-m snakemk_util.main",
         "--rule", rule,
         "--snakefile", normalizePath(snakefile),
-        "--root", dirname(normalizePath(snakefile)),
+        "--root_dir", dirname(normalizePath(snakefile)),
         "--wildcards", paste0('"', wildcards, '"'),
-        "--gen-preamble RScript",
+        "--gen-preamble", "RScript",
         "--create_dirs"
     )
     eval(parse(text=system2(python, cmd, stdout=TRUE, stderr="")))

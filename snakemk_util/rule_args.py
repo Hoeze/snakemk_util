@@ -120,7 +120,7 @@ def pretty_print_snakemake(snakemake_obj: script.Snakemake) -> str:
 def load_rule_args(
     snakefile: str,
     rule_name: str,
-    default_wildcards: dict[str, str] | Wildcards = ...,
+    default_wildcards: dict[str, str] | Wildcards | None = ...,
     change_dir: bool = ...,
     create_dir: bool = ...,
     root: str | None = ...,
@@ -133,7 +133,7 @@ def load_rule_args(
 def load_rule_args(
     snakefile: str,
     rule_name: str,
-    default_wildcards: dict[str, str] | Wildcards = ...,
+    default_wildcards: dict[str, str] | Wildcards | None = ...,
     change_dir: bool = ...,
     create_dir: bool = ...,
     root: str | None = ...,
@@ -145,7 +145,7 @@ def load_rule_args(
 def load_rule_args(
     snakefile: str,
     rule_name: str,
-    default_wildcards: dict[str, str] | Wildcards = None,
+    default_wildcards: dict[str, str] | Wildcards | None = None,
     change_dir: bool = False,
     create_dir: bool = True,
     root: str | None = None,
@@ -268,51 +268,84 @@ def load_rule_args(
                 )
 
             return retval
-        else:  # create script preamble and return as string
-            if isinstance(flavor, str):
-                if hasattr(script, flavor):
-                    flavor = cast(type[script.ScriptBase], getattr(script, flavor))
-                elif notebook is not None and hasattr(notebook, flavor):
-                    flavor = cast(type[script.ScriptBase], getattr(notebook, flavor))
-
-            # check correct type of `flavor`
-            if not isinstance(flavor, type) or not issubclass(flavor, script.ScriptBase):
-                raise ValueError(f"Unknown script type specified: '{flavor}'. ")
-
-            script_obj = flavor(
-                path=rule.basedir.join(os.path.basename(rule.snakefile)),
-                cache_path=None,
-                source="",
-                basedir=smk_scriptdir,
-                input_=smk_input,
-                output=smk_output,
-                params=smk_params,
-                wildcards=default_wildcards,
-                threads=smk_threads,
-                resources=smk_resources,
-                log=smk_log,
-                config=smk_config,
-                rulename=rule_name,
-                conda_env=rule.conda_env,
-                conda_base_path=workflow.conda_base_path,
-                container_img=rule.container_img,
-                singularity_args=workflow.deployment_settings.apptainer_args,
-                env_modules=rule.env_modules,
-                bench_record=None,
-                jobid=0,
-                bench_iteration=None,
-                cleanup_scripts=None,
-                shadow_dir=None,
-                is_local=workflow.is_local(rule),
-                runtime_paths=workflow.runtime_paths,
+        else:
+            return _load_preamble(
+                flavor=flavor,
+                rule=rule,
+                rule_name=rule_name,
+                workflow=workflow,
+                smk_input=smk_input,
+                smk_output=smk_output,
+                smk_params=smk_params,
+                smk_wildcards=default_wildcards,
+                smk_threads=smk_threads,
+                smk_resources=smk_resources,
+                smk_log=smk_log,
+                smk_config=smk_config,
+                smk_scriptdir=smk_scriptdir,
             )
-
-            return script_obj.get_preamble()
 
     finally:
         if not change_dir:
             # change back to previous working directory
             os.chdir(cwd)
+
+
+def _load_preamble(
+    *,
+    flavor: str | type[script.ScriptBase],
+    rule,
+    rule_name: str,
+    workflow: Workflow,
+    smk_input: InputFiles,
+    smk_output: OutputFiles,
+    smk_params: Params,
+    smk_wildcards: Wildcards,
+    smk_threads: int,
+    smk_resources,
+    smk_log,
+    smk_config,
+    smk_scriptdir: str,
+) -> str:
+    """Build the script preamble string for a resolved rule."""
+    if isinstance(flavor, str):
+        if hasattr(script, flavor):
+            flavor = cast(type[script.ScriptBase], getattr(script, flavor))
+        elif notebook is not None and hasattr(notebook, flavor):
+            flavor = cast(type[script.ScriptBase], getattr(notebook, flavor))
+
+    if not isinstance(flavor, type) or not issubclass(flavor, script.ScriptBase):
+        raise ValueError(f"Unknown script type specified: '{flavor}'. ")
+
+    script_obj = flavor(
+        path=rule.basedir.join(os.path.basename(rule.snakefile)),
+        cache_path=None,
+        source="",
+        basedir=smk_scriptdir,
+        input_=smk_input,
+        output=smk_output,
+        params=smk_params,
+        wildcards=smk_wildcards,
+        threads=smk_threads,
+        resources=smk_resources,
+        log=smk_log,
+        config=smk_config,
+        rulename=rule_name,
+        conda_env=rule.conda_env,
+        conda_base_path=workflow.conda_base_path,
+        container_img=rule.container_img,
+        singularity_args=workflow.deployment_settings.apptainer_args,
+        env_modules=rule.env_modules,
+        bench_record=None,
+        jobid=0,
+        bench_iteration=None,
+        cleanup_scripts=None,
+        shadow_dir=None,
+        is_local=workflow.is_local(rule),
+        runtime_paths=workflow.runtime_paths,
+    )
+
+    return script_obj.get_preamble()
 
 
 def reload_snakemake(snakefile: str, snakemake_obj: script.Snakemake, root: str | None = None) -> script.Snakemake:
