@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/Hoeze/snakemk_util/compare/v3.0.0...v3.0.1) (2026-05-09)
+
+
+### Miscellaneous Chores
+
+* trigger v3.0.1 release ([340bc21](https://github.com/Hoeze/snakemk_util/commit/340bc210e0827225e6f0d6ca67309a279a06415e))
+
 ## [3.0.0](https://github.com/Hoeze/snakemk_util/compare/v2.0.2...v3.0.0) (2026-05-09)
 
 
