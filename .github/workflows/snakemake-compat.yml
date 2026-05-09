@@ -1,0 +1,95 @@
+name: Snakemake compatibility
+
+# Re-runs the test suite against the latest snakemake release that
+# satisfies our version constraint. The detect job polls snakemake's
+# GitHub releases and gates the compat job through actions/cache so the
+# tests only execute when a new upstream tag appears.
+#
+# Trigger paths:
+#   - schedule: backstop poll every 6h
+#   - workflow_dispatch: manual run
+#   - repository_dispatch (snakemake-release): external bot can ping us
+#     directly so we don't have to wait for the next cron tick
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [snakemake-release]
+
+env:
+  UV_VERSION: "0.11.6"
+  UV_PYTHON_PREFERENCE: "managed"
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    name: Detect new snakemake release
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.fetch.outputs.tag }}
+      changed: ${{ steps.cache.outputs.cache-hit != 'true' }}
+    steps:
+      - name: Fetch latest snakemake release tag
+        id: fetch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag=$(gh api repos/snakemake/snakemake/releases/latest --jq .tag_name)
+          if [ -z "$tag" ] || [ "$tag" = "null" ]; then
+            echo "Failed to resolve latest snakemake release tag" >&2
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Latest snakemake release: $tag"
+
+      - name: Check whether this tag has already been compat-tested
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: .snakemake-compat-marker
+          key: snakemake-compat-${{ steps.fetch.outputs.tag }}
+
+      - name: Record marker for new tag
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: echo "${{ steps.fetch.outputs.tag }}" > .snakemake-compat-marker
+
+  compat:
+    name: Test against snakemake ${{ needs.detect.outputs.tag }} (Python ${{ matrix.python-version }})
+    needs: detect
+    if: |
+      needs.detect.outputs.changed == 'true'
+      || github.event_name == 'workflow_dispatch'
+      || github.event_name == 'repository_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.14"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Upgrade snakemake in uv.lock
+        run: uv lock --upgrade-package snakemake
+
+      - name: Show resolved snakemake version
+        run: uv tree --package snakemake | head -5
+
+      - name: Install project dependencies
+        run: uv sync --all-groups
+
+      - name: Run tests
+        run: uv run tox -e py${{ matrix.python-version }}
