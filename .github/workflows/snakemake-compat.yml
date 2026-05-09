@@ -1,0 +1,98 @@
+name: Snakemake compatibility
+
+# Re-runs the test suite against the latest snakemake release that
+# satisfies our version constraint. The detect job asks `uv` itself
+# what would be resolved if `uv.lock` were upgraded for snakemake; the
+# resolved version is used as the actions/cache key, so the matrix
+# only runs when the upgrade would land on a snakemake version we have
+# not tested before.
+#
+# Trigger paths:
+#   - schedule: backstop poll every 6h
+#   - workflow_dispatch: manual run
+#   - repository_dispatch (snakemake-release): external bot can ping us
+#     directly so we don't have to wait for the next cron tick
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [snakemake-release]
+
+env:
+  UV_VERSION: "0.11.6"
+  UV_PYTHON_PREFERENCE: "managed"
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    name: Resolve latest snakemake
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      changed: ${{ steps.cache.outputs.cache-hit != 'true' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Resolve latest snakemake under current constraint
+        id: resolve
+        run: |
+          uv lock --upgrade-package snakemake
+          version=$(python3 -c 'import tomllib; d=tomllib.load(open("uv.lock","rb")); print(next(p["version"] for p in d["package"] if p["name"]=="snakemake"))')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Resolved snakemake==$version"
+
+      - name: Check whether this resolved version has already been tested
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: .snakemake-compat-marker
+          key: snakemake-compat-${{ steps.resolve.outputs.version }}
+
+      - name: Record marker for new version
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: echo "${{ steps.resolve.outputs.version }}" > .snakemake-compat-marker
+
+  compat:
+    name: Test against snakemake ${{ needs.detect.outputs.version }} (Python ${{ matrix.python-version }})
+    needs: detect
+    if: |
+      needs.detect.outputs.changed == 'true'
+      || github.event_name == 'workflow_dispatch'
+      || github.event_name == 'repository_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.14"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Upgrade snakemake in uv.lock
+        run: uv lock --upgrade-package snakemake
+
+      - name: Install project dependencies
+        run: uv sync --all-groups
+
+      - name: Run tests
+        run: uv run tox -e py${{ matrix.python-version }}
