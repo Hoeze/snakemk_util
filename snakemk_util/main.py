@@ -5,6 +5,11 @@ import sys
 import textwrap
 from contextlib import redirect_stdout
 
+# Mirrors snakemake's identifier check for config keys
+# (see snakemake.cli.parse_config), restricted to valid Python
+# identifiers since wildcards are bound to attribute access.
+_VALID_WILDCARD_NAME = re.compile(r"^[a-zA-Z_]\w*$")
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -66,11 +71,27 @@ def main():
     )
     args = parser.parse_args()
 
+    from snakemake.common import parse_key_value_arg
+
     from snakemk_util.rule_args import load_rule_args, pretty_print_snakemake
 
-    # parse wildcards
-    wildcard_pattern = r"([^=,]+)=([^,]*)"
-    wildcards = dict(re.findall(wildcard_pattern, args.wildcards))
+    wildcards: dict[str, str] = {}
+    if args.wildcards:
+        for entry in args.wildcards.split(","):
+            if not entry:
+                continue
+            try:
+                key, value = parse_key_value_arg(
+                    entry,
+                    errmsg="Wildcards must be specified as 'key=value' pairs",
+                )
+            except ValueError as exc:
+                parser.error(str(exc))
+            if not _VALID_WILDCARD_NAME.match(key):
+                parser.error(f"Invalid wildcard name {key!r}: must be a valid identifier")
+            if key in wildcards:
+                parser.error(f"Duplicate wildcard key {key!r}")
+            wildcards[key] = value
 
     with redirect_stdout(sys.stderr):
         snakemake_obj = load_rule_args(
