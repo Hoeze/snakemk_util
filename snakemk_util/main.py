@@ -54,12 +54,14 @@ def main():
     )
     parser.add_argument(
         "--wildcards",
-        action="store",
+        nargs="*",
         dest="wildcards",
-        default="",
+        default=[],
+        metavar="KEY=VALUE",
         help=(
-            "Comma-separated key-value list of wildcards which should be used "
-            "to format the rule output. Example: 'wildcard0=x,wildcard1=y'"
+            "Wildcards used to format the rule output, given as "
+            "space-separated 'key=value' tokens. "
+            "Example: --wildcards wildcard0=x wildcard1=y"
         ),
     )
     parser.add_argument(
@@ -76,22 +78,19 @@ def main():
     from snakemk_util.rule_args import load_rule_args, pretty_print_snakemake
 
     wildcards: dict[str, str] = {}
-    if args.wildcards:
-        for entry in args.wildcards.split(","):
-            if not entry:
-                continue
-            try:
-                key, value = parse_key_value_arg(
-                    entry,
-                    errmsg="Wildcards must be specified as 'key=value' pairs",
-                )
-            except ValueError as exc:
-                parser.error(str(exc))
-            if not _VALID_WILDCARD_NAME.match(key):
-                parser.error(f"Invalid wildcard name {key!r}: must be a valid identifier")
-            if key in wildcards:
-                parser.error(f"Duplicate wildcard key {key!r}")
-            wildcards[key] = value
+    for entry in args.wildcards:
+        try:
+            key, value = parse_key_value_arg(
+                entry,
+                errmsg="Wildcards must be specified as 'key=value' pairs",
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
+        if not _VALID_WILDCARD_NAME.match(key):
+            parser.error(f"Invalid wildcard name {key!r}: must be a valid identifier")
+        if key in wildcards:
+            parser.error(f"Duplicate wildcard key {key!r}")
+        wildcards[key] = value
 
     with redirect_stdout(sys.stderr):
         snakemake_obj = load_rule_args(
