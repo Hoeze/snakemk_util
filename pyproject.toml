@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "snakemk_util"
-version = "3.0.0"
+version = "3.0.1"
 description = "utility functions for snakemake"
 authors = [
     { name = "Florian R. Hölzlwimmer", email = "git.ich@frhoelzlwimmer.de" }
