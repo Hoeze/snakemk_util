@@ -69,3 +69,15 @@ jobs:
           git add uv.lock
           git commit -m "chore: refresh uv.lock for release"
           git push
+
+  publish:
+    name: Publish to PyPI
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/publish.yml
+    with:
+      ref: ${{ needs.release-please.outputs.tag_name }}
+    secrets: inherit
