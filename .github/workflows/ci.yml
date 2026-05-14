@@ -4,7 +4,6 @@ on:
   push:
     branches: [main, master]
   pull_request:
-    branches: [main, master]
   workflow_dispatch:
 
 env:
@@ -69,3 +68,22 @@ jobs:
 
       - name: Run tests
         run: uv run tox -e py${{ matrix.python-version }}
+
+  # Aggregator job: a single, stable check-run name to use as the required
+  # status check in branch protection. Stays valid even if the matrix or the
+  # individual job names change.
+  ci:
+    name: CI
+    needs: [quality-checks, test]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Verify no upstream job failed
+        run: |
+          # Fail only on failure/cancelled. A skipped job is allowed
+          for result in "${{ needs.quality-checks.result }}" "${{ needs.test.result }}"; do
+            if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
+              echo "An upstream job did not pass: quality-checks=${{ needs.quality-checks.result }} test=${{ needs.test.result }}"
+              exit 1
+            fi
+          done
