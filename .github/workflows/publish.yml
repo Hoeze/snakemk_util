@@ -2,9 +2,17 @@ name: Publish to PyPI
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+*"
+    inputs:
+      ref:
+        description: "Git ref to build and publish"
+        type: string
+        required: false
+  workflow_call:
+    inputs:
+      ref:
+        description: "Git ref to build and publish"
+        type: string
+        required: true
 
 env:
   UV_VERSION: "0.11.6"
@@ -24,7 +32,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6

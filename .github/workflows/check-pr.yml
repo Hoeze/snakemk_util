@@ -39,3 +39,20 @@ jobs:
             Subject must start with lowercase letter and not end with a period.
             Got: "{subject}"
           wip: true
+
+  # Aggregator job: a single, stable check-run name to use as the required
+  # status check in branch protection, independent of the underlying job name.
+  pr-title-lint:
+    name: PR Title Lint
+    needs: [conventional-title]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Verify PR title lint did not fail
+        run: |
+          # Fail only on failure/cancelled; a skipped run is allowed.
+          result="${{ needs.conventional-title.result }}"
+          if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
+            echo "PR title lint did not pass: $result"
+            exit 1
+          fi
