@@ -1,0 +1,16 @@
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    # Actions are pinned to commit SHAs, so Dependabot is what keeps them
+    # current. The `ci` prefix makes its PR titles pass the Conventional
+    # Commits title lint, and keeps the bumps out of the changelog.
+    commit-message:
+      prefix: ci
+    groups:
+      github-actions:
+        patterns:
+          - "*"
