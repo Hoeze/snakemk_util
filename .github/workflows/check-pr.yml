@@ -9,7 +9,9 @@ name: PR Title Lint
 #   - never checks out or executes PR code (no actions/checkout),
 #   - never interpolates PR-controlled data (title, body, branch name)
 #     into `run:` scripts,
-#   - restricts permissions to `pull-requests: read` + `statuses: write`.
+#   - grants nothing by default (`permissions: {}` below), so only the job
+#     that reads the PR title opts in, to `pull-requests: read` plus
+#     `statuses: write` and nothing else.
 #
 # DO NOT add a checkout of PR code or run any PR-provided content here.
 # Doing so would let a fork execute arbitrary code with write access to
@@ -23,14 +25,16 @@ on:
       - synchronize
       - reopened
 
-permissions:
-  pull-requests: read
-  statuses: write
+# Default-deny; each job opts in to what it needs. The aggregator needs nothing.
+permissions: {}
 
 jobs:
   conventional-title:
     name: Validate PR title (Conventional Commits)
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read # read the PR title
+      statuses: write # post the lint result as a commit status
     steps:
       - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
         env:
