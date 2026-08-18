@@ -1,7 +1,22 @@
 name: PR Title Lint
 
+# SECURITY NOTE: This workflow uses `pull_request_target` so that the
+# title-lint can write commit statuses on PRs from forks (the default
+# `pull_request` token is read-only for forks).
+#
+# `pull_request_target` runs with a privileged token in the context of
+# the BASE branch. That is only safe because this workflow:
+#   - never checks out or executes PR code (no actions/checkout),
+#   - never interpolates PR-controlled data (title, body, branch name)
+#     into `run:` scripts,
+#   - restricts permissions to `pull-requests: read` + `statuses: write`.
+#
+# DO NOT add a checkout of PR code or run any PR-provided content here.
+# Doing so would let a fork execute arbitrary code with write access to
+# this repository ("pwn request"). If code from the PR ever needs to be
+# tested, use a separate workflow with the plain `pull_request` trigger.
 on:
-  pull_request:
+  pull_request_target:
     types: 
       - opened
       - edited
