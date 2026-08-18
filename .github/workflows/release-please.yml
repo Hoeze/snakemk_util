@@ -36,16 +36,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Determine release PR branch
-        id: branch
-        run: |
-          BRANCH=$(echo '${{ needs.release-please.outputs.prs }}' | jq -r '.[0].headBranchName')
-          echo "name=$BRANCH" >> "$GITHUB_OUTPUT"
-
       - name: Checkout release PR branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.branch.outputs.name }}
+          ref: ${{ fromJSON(needs.release-please.outputs.prs)[0].headBranchName }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install uv
