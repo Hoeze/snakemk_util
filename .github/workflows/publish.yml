@@ -7,12 +7,6 @@ on:
         description: "Git ref to build and publish"
         type: string
         required: false
-  workflow_call:
-    inputs:
-      ref:
-        description: "Git ref to build and publish"
-        type: string
-        required: true
 
 env:
   UV_VERSION: "0.11.6"

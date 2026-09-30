@@ -68,10 +68,16 @@ jobs:
     name: Publish to PyPI
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      contents: read
-    uses: ./.github/workflows/publish.yml
-    with:
-      ref: ${{ needs.release-please.outputs.tag_name }}
-    secrets: inherit
+      actions: write
+    steps:
+      # Dispatch publish.yml instead of calling it via workflow_call. PyPI
+      # checks the attestation against the top-level workflow, so the upload
+      # only verifies when publish.yml runs on its own. workflow_dispatch is
+      # the one event that GITHUB_TOKEN may use to start another workflow.
+      - name: Start publish.yml for the release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+        run: gh workflow run publish.yml --repo "$GITHUB_REPOSITORY" --ref "$TAG_NAME"
