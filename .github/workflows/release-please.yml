@@ -65,7 +65,7 @@ jobs:
           git push
 
   publish:
-    name: Publish to PyPI
+    name: Start publish.yml
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created }}
     runs-on: ubuntu-latest
